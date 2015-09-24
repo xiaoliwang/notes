@@ -1,0 +1,138 @@
+% -*- coding: UTF8 -*-
+% firstDocument.tex
+% tex的第一个文档
+% 使用XelaTex编译
+
+% 中文article包，使用UTF8编码
+\documentclass[UTF8]{ctexart}
+
+% 插图功能宏包
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+% 设计页面尺寸的宏包
+\usepackage{geometry}
+
+% ---导言区---
+% \begin{document}前的部分为导言区(preamble),导言区通常用来对文档的性质做一些设置
+
+% 定义a4纸，版心居中，长宽占页面的80%
+\geometry{a4paper, centering, scale=0.8}
+
+% 以下内容并不会马上编译，而是在\maketitle处编译
+\title{tex的教学文档}
+\author{操杰朋}
+\date{\today}
+
+% \bibliographystyle声明参考文献格式
+\bibliographystyle{plain}
+
+% \newtheorem定义环境
+\newtheorem{thm}{定理}
+
+% ---正文部分---
+\begin{document}
+
+\maketitle
+
+% \tableofcontents命令输出目录
+\tableofcontents
+
+\section{空行,空格测试}
+
+% 汉字后面的空格会被忽略,其它符号后面的空格则保留
+left right 左 右\footnote{这是一个脚注}
+
+% 使用空行分段，当个空行并不会使文字灵气一段，空白行则会另起一段
+这是另起一行\emph{这里是强调}
+
+
+\section{各种环境测试}
+
+\begin{quote}
+  % \zihao设置字号 \kaishu即楷书
+  \zihao{-5} \kaishu 这里是引用
+\end{quote}
+
+\begin{abstract}
+  这里是摘要
+\end{abstract}
+
+\begin{thm}[测试定理]
+  这里是定理
+  % --将输出"en dash"，即与字母"n"相当的短线
+    7--8
+\end{thm}
+
+
+\section{数学公式}
+
+% 行内公式(inline formula)，正文公式(in-text formula)
+$a + b \times 90^\circ$
+
+% 列表公式(displayed formula)
+\begin{equation}
+  a(b + c) = ab + ac
+\end{equation}
+
+
+\section{图片测试}
+
+文字文字
+% 插入图片，第一个参数为图形宽度，第二个为图片地址(支持pdf,png,jpg,eps等)
+\includegraphics[width=3cm]{1.jpg}
+文字文字
+
+%figure即插图使用的浮动体环境[ht]表示here or top
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.5]{1.jpg}
+  \caption{一张图片}
+  % 使用该标签可以在文章的其他地方引用\caption产生的编号
+  \label{flag:xiantu}
+\end{figure}
+
+
+\section{表格测试}
+
+% 表格|rrr|表示表格三列，都是右对齐
+\begin{tabular}{|rrr|}
+\hline
+    直角边$a$ & 直角边$b$ & 斜边$c$ \\
+\hline
+    3 &  4 &  5 \\
+    5 &  12 & 13 \\
+\hline
+\end{tabular}
+
+% h表示不浮动[H],[H]是由package float提供
+\begin{table}[H]
+  \begin{tabular}{|rrr|}
+    \hline
+        直角边$a$ & 直角边$b$ & 斜边$c$ \\
+    \hline
+        3 &  4 &  5 \\
+        5 &  12 & 13 \\
+    \hline
+  \end{tabular}
+  % \qquad 表示 2em(em表示equal M)
+  \qquad ($a^2 + b^2 = c^2$)
+\end{table}
+
+\section{文献引用测试}
+文献引用 \cite{Kline}
+
+图\ref{flag:xiantu} 是一张图片引用
+
+\begin{equation}\label{eq:gougu}
+  AB^2 = BC^2 + AC^2
+\end{equation}
+
+% \eqref 专门用于公式的引用，由package amsmath提供
+满足式 \eqref{eq:gougu}的整数称为 \emph{勾股数}。
+
+% \notice会在列表中显示并不直接引用的文献，一般写在\bibliography前
+\nocite{Shiye}
+\bibliography{math}
+
+\end{document} 
