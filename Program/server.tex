@@ -1,0 +1,108 @@
+% -*- coding: UTF8 -*-
+% server.tex
+% 关于服务器配置的笔记
+% 使用XelaTex编译
+
+\documentclass[UTF8]{ctexart}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{minted}
+
+
+\geometry{a4paper, centering, scale=0.8}
+
+\newtheorem{shellcommand}{shell命令}
+\newenvironment{myquote}
+  {\begin{quote} \kaishu \zihao{-5}}
+  {\end{quote}}
+
+\title{\heiti 服务器配置笔记}
+\author{\kaishu 操杰朋}
+\date{2015年9月25日}
+
+\begin{document}
+\maketitle
+\clearpage
+
+\tableofcontents
+\clearpage
+
+\section{Nginx}
+\subsection{Nginx的启动，停止及平滑重启}
+启动Nginx可执行Shell命令\eqref{eq:start}，如不加参数“-c”，则加载默认目录下的nginx.conf。
+
+\begin{shellcommand}
+  nginx -c nginx.conf \label{eq:start}
+\end{shellcommand}
+
+Nginx的停止方法有多种，我们可以通过shell命令\eqref{eq:nginxPid}来查找Nginx的主进程号，再使用kill来结束进程。
+
+\begin{shellcommand}
+  ps -ef | grep nginx \label{eq:nginxPid}
+\end{shellcommand}
+
+Nginx的平滑重启，可以通过shell命令\eqref{eq:checkNginx}来查看Nginx配置是否正确,在使用shell命令\eqref{eq:restart}来平滑重启
+\begin{shellcommand}
+  nginx -t -c nginx.conf \label{eq:checkNginx}
+\end{shellcommand}
+\begin{shellcommand}
+  nginx -s reload \label{eq:restart}
+\end{shellcommand}
+
+\subsection{Nginx配置}
+以下是一个Nginx的配置文件\footnote{cat /proc/sys/fs/file-max或ulimit -n查看文件描述符数量}：
+
+\begin{minted}{php}
+# 使用的用户和组
+user www www;
+# 指定工作衍生的进程数(一般等于cpu的总数或其倍数)
+worker_processes cpu_number;
+# 指定错误日志存放路径，可选级别[ debug | info | notice | warn | error | crit]
+error_log error_path error_level;
+# 指定pid存放路径
+pid pid_path;
+# 指定文件描述符数量(worker_rlimit_nofile number设置描述符数量)
+worker_rlimit_nofile number;
+
+events
+{
+  #使用的网络I/O模型，Linux使用epoll，FreeBSD使用Kqueu
+  use epoll;
+  # 允许的连接数
+  worker_connections number;
+}
+
+http
+{
+  include mime.types;
+  default_type application/octet-stream;
+  
+  ...
+  
+  # 客户端上传大小
+  client_max_body_size 8m;
+  
+  ...
+  server
+  {
+    ...
+  }
+}
+\end{minted}
+
+其中server\{...\}为虚拟主机，其重要参数为:
+
+\begin{itemize}
+  \item listen ip:port：监听ip及端口，如果只写端口，表示监听所有ip
+  \item server\_name [ip|domain]：监听域名或端口
+  \item log\_format name format [format ...]：设置日志格式
+  \item access\_log path [format]：设置日志文件
+  \item expires 30d：设置缓存时间
+\end{itemize}
+
+设置日志格式：
+
+\clearpage
+
+\section{Apache}
+\end{document} 

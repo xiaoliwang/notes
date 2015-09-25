@@ -5,3 +5,5 @@
 *.aux
 *.blg
 *.synctex
+*.pygtex
+*.pygstyle
