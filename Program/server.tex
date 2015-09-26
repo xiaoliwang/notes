@@ -76,12 +76,12 @@ http
 {
   include mime.types;
   default_type application/octet-stream;
-  
+
   ...
-  
+
   # 客户端上传大小
   client_max_body_size 8m;
-  
+
   ...
   server
   {
@@ -98,10 +98,35 @@ http
   \item log\_format name format [format ...]：设置日志格式
   \item access\_log path [format]：设置日志文件
   \item expires 30d：设置缓存时间
+  \item proxy\_pass url：设置反向代理
+  \item proxy\_set\_header：设置代理头
 \end{itemize}
 
-设置日志格式：
+\subsection{Nginx Rewrite规则}
+rewrite \^{}/(.*)\$ http://news.missevan.cn/\$1 permanent;
 
+一共有四种不同的flag，分别是redirect，permanent，break，last。前两种是跳转，后两种是代理。
+\begin{itemize}
+  \item redirect：302\footnote{临时跳转}跳转
+  \item permanent：301\footnote{永久跳转}跳转
+  \item last：会继续执行下面的location
+  \item break：直接执行server
+\end{itemize}
+
+其他一些关键字：
+\begin{itemize}
+  \item -f：用来判断文件是否存在
+  \item -d：用来判断文件夹是否存在
+  \item -e：用来判断文件，文件夹是否存在
+  \item -x：用来判断文件是否可以执行
+  \item $\sim$：区分大小写匹配
+  \item $\sim$*：不区分大小写匹配
+  \item alias：在该目录下查找
+  \item root：认为该目录为root，进行查找
+\end{itemize}
+
+\subsection{Nginx变量}
+set \$key value;
 \clearpage
 
 \section{Apache}
