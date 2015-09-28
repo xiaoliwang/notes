@@ -18,7 +18,9 @@
 
 \title{\heiti 服务器配置笔记}
 \author{\kaishu 操杰朋}
-\date{2015年9月25日}
+\date{创建：2015年9月25日 \\
+更新：\today}
+
 
 \begin{document}
 \maketitle
@@ -28,81 +30,189 @@
 \clearpage
 
 \section{Nginx}
-\subsection{Nginx的启动，停止及平滑重启}
-启动Nginx可执行Shell命令\eqref{eq:start}，如不加参数“-c”，则加载默认目录下的nginx.conf。
-
-\begin{shellcommand}
-  nginx -c nginx.conf \label{eq:start}
+\subsection{Nginx的一些基础操作}
+\begin{shellcommand}[检查配置文件]
+  nginx -t -c nginx.conf
 \end{shellcommand}
 
-Nginx的停止方法有多种，我们可以通过shell命令\eqref{eq:nginxPid}来查找Nginx的主进程号，再使用kill来结束进程。
-
-\begin{shellcommand}
-  ps -ef | grep nginx \label{eq:nginxPid}
+\begin{shellcommand}[启动Nginx]
+  nginx -c nginx.conf \footnote{不加参数-c，则加载默认目录下的nginx.conf}
 \end{shellcommand}
 
-Nginx的平滑重启，可以通过shell命令\eqref{eq:checkNginx}来查看Nginx配置是否正确,在使用shell命令\eqref{eq:restart}来平滑重启
-\begin{shellcommand}
-  nginx -t -c nginx.conf \label{eq:checkNginx}
-\end{shellcommand}
-\begin{shellcommand}
-  nginx -s reload \label{eq:restart}
+\begin{shellcommand}[快速关闭Nginx]
+  nginx -s stop \footnote{可能存在不安全， 类似pkill -9 nginx或nginx -TERM nginx\_pid}
 \end{shellcommand}
 
-\subsection{Nginx配置}
-以下是一个Nginx的配置文件\footnote{cat /proc/sys/fs/file-max或ulimit -n查看文件描述符数量}：
+\begin{shellcommand}[平滑关闭Nginx]
+  nginx -s quit \footnote{安全， 类似kill -QUIT nginx\_pid}
+\end{shellcommand}
 
-\begin{minted}{php}
+\begin{shellcommand}[重启Nginx]
+  nginx -s reload \footnote{重新载入配置文件}
+\end{shellcommand}
+
+\begin{shellcommand}[重启Nginx]
+  nginx -s reopen \footnote{使用新的日志路径，在迁移日志时使用}
+\end{shellcommand}
+
+
+\subsection{一个Nginx配置文件}
+\begin{myquote}
+  \begin{minted}{php}
 # 使用的用户和组
 user www www;
+    
 # 指定工作衍生的进程数(一般等于cpu的总数或其倍数)
 worker_processes cpu_number;
-# 指定错误日志存放路径，可选级别[ debug | info | notice | warn | error | crit]
+    
+# 指定错误日志存放路径，可选级别[ debug | info | notice 
+# | warn | error | crit]
 error_log error_path error_level;
+    
 # 指定pid存放路径
 pid pid_path;
-# 指定文件描述符数量(worker_rlimit_nofile number设置描述符数量)
+    
+# 指定文件描述符数量(cat /proc/sys/fs/file-max 或 
+# ulimit -n查看文件描述符数量)
 worker_rlimit_nofile number;
-
+    
 events
 {
-  #使用的网络I/O模型，Linux使用epoll，FreeBSD使用Kqueu
+  # 使用的网络I/O模型，Linux使用epoll，FreeBSD使用Kqueu
   use epoll;
-  # 允许的连接数
+      
+  # 每个进程允许的最多连接数
+  # worker_connections不能超过worker_rlimit_nofile
   worker_connections number;
 }
-
+    
 http
 {
+  # 文件扩展名与文件类型映射表
   include mime.types;
+
+  # 默认文件类型
   default_type application/octet-stream;
 
-  ...
+  # 默认字符集，一般不设置，使用html中的meta设置
+  #charset utf-8
 
-  # 客户端上传大小
-  client_max_body_size 8m;
+  # mime的hash表大小
+  server_names_hash_bucket_size 64;
 
-  ...
+  # http头的最大长度，超过会返回400
+  client_header_buffer_size 16k;
+
+  # 获取http最大数及大小，超过会返回414。default为8k
+  large_client_header_buffers 4 32k;
+
+  # request body的最大值，超过会返回413。默认值为1m。
+  # 设置0则为无限大。
+  client_max_body_size 1m;
+
+  # 是否调用linux senfile函数，默认为off
+  sendfile on;
+
+  # 数据包最大时，一次发送。只有当sendfile打开时有用，
+  # 与tcp_nodelay互斥，默认为off。
+  tcp_nopush off;
+
+  # 长连接超时时间
+  keepalive_timeout 120;
+
+  # 只有当keep-alive打开时有用，小块数据直接发送
+  # 默认为off
+  tcp_nodelay off;
+
+  # 开启目录列表访问，默认为off;
+  autoindex off;
+
+  #########FastCGI相关参数#########
+  # nginx与fastcgi建立连接的时间，最长不大于75s,默认60s
+  fastcgi_connect_timeout 60s;
+
+  # nginx向fastcgi进程发送request的连续写时间,默认60s
+  fastcgi_send_timeout 300s;
+
+  # nginx读取fastcgi进程返回的response的连续读时间，默认60s
+  fastcgi_read_timeout 300s;
+
+  fastcgi_buffer_size 64k;
+  fastcgi_buffers 4 64k;
+  fastcgi_busy_buffers_size 128k;
+  fastcgi_temp_file_write_size 128k;
+
+  #########gzip模块设置#########
+  #开启gzip压缩输出
+  gzip on;
+
+  #最小压缩文件大小
+  gzip_min_length 1k;
+
+  #压缩缓冲区
+  gzip_buffers 4 16k;
+
+  #压缩版本（默认1.1，前端如果是squid2.5请使用1.0）
+  gzip_http_version 1.0;
+
+  #压缩等级
+  gzip_comp_level 2;
+
+  #压缩类型，默认就已经包含text/html，所以下面就不用再写了，写上去也不会有问题，但是会有一个warn。
+  gzip_types text/plain application/x-javascript text/css application/xml;
+
+  #########虚拟主机配置########
   server
   {
-    ...
+    # 监听ip及端口，如果只写端口，表示监听所有ip
+    listen 80;
+
+    #监听域名或ip
+    server_name www.tomcao.com 192.168.1.1;
+
+    #设置日志
+    log_format format_name '$remote_addr - $remote_user [$time_local] '
+                           '"$request" $status $bytes_sent '
+                           '"$http_referer" "$http_user_agent" "$gzip_ratio"';
+    access_log log_path format_name buffer=32k;
+
+    index index.html index.htm index.php;
+    root /data/tomcao;
+
+    location ^(js|css|image)
+    {
+      # 缓存一天
+      expires 1d;
+    }
+
+    location ^/anotherweb/
+    {
+      proxy_pass http://anotherweb;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location ~ \.php$
+    {
+      fastcgi_pass 127.0.0.1:9000;
+      # fastcgi_pass unix:/dev/shm/php.sock;
+      include fastcgi_params;
+      fastcgi_index index.php;
+    }
+
+    location ~/\.ht
+    {
+      deny all;
+    }
   }
 }
-\end{minted}
+  \end{minted}
+\end{myquote}
+其中fastcgi\_params详见附录。
 
-其中server\{...\}为虚拟主机，其重要参数为:
 
-\begin{itemize}
-  \item listen ip:port：监听ip及端口，如果只写端口，表示监听所有ip
-  \item server\_name [ip|domain]：监听域名或端口
-  \item log\_format name format [format ...]：设置日志格式
-  \item access\_log path [format]：设置日志文件
-  \item expires 30d：设置缓存时间
-  \item proxy\_pass url：设置反向代理
-  \item proxy\_set\_header：设置代理头
-\end{itemize}
-
-\subsection{Nginx Rewrite规则}
+\subsection{Nginx配置文件的操作}
+设置变量：set \$key value;
 rewrite \^{}/(.*)\$ http://news.missevan.cn/\$1 permanent;
 
 一共有四种不同的flag，分别是redirect，permanent，break，last。前两种是跳转，后两种是代理。
@@ -125,9 +235,58 @@ rewrite \^{}/(.*)\$ http://news.missevan.cn/\$1 permanent;
   \item root：认为该目录为root，进行查找
 \end{itemize}
 
-\subsection{Nginx变量}
-set \$key value;
-\clearpage
+
 
 \section{Apache}
+\clearpage
+
+\section{附录}
+\subsection{fastcgi\_params}
+\begin{myquote}
+  \begin{minted}{php}
+#脚本请求路径
+fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name; 
+#REQUEST的query参数
+fastcgi_param  QUERY_STRING       $query_string;
+#REQUEST的动作（GET, POST）
+fastcgi_param  REQUEST_METHOD     $request_method;
+#REQUEST头中的Content-Type字段
+fastcgi_param  CONTENT_TYPE       $content_type;
+#REQUEST头中的Content-length字段
+fastcgi_param  CONTENT_LENGTH     $content_length; 
+
+#脚本名称
+fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
+#请求的地址不带参数
+fastcgi_param  REQUEST_URI        $request_uri;
+#与uri相同
+fastcgi_param  DOCUMENT_URI       $document_uri;
+#网站的根目录，在server配置中root的值
+fastcgi_param  DOCUMENT_ROOT      $document_root;
+#请求使用的协议
+fastcgi_param  SERVER_PROTOCOL    $server_protocol;
+#HTTP或HTTPS，通常是HTTP/1.0或HTTP/1.1。
+fastcgi_param  REQUEST_SCHEME     $scheme; 
+fastcgi_param  HTTPS              $https if_not_empty;
+
+#CGI版本号
+fastcgi_param  GATEWAY_INTERFACE  CGI/1.1;
+#nginx版本号、可修改、隐藏
+fastcgi_param  SERVER_SOFTWARE    nginx/$nginx_version;
+
+#客户端IP
+fastcgi_param  REMOTE_ADDR        $remote_addr;
+#客户端端口
+fastcgi_param  REMOTE_PORT        $remote_port;
+#服务器IP地址
+fastcgi_param  SERVER_ADDR        $server_addr;
+#服务器端口
+fastcgi_param  SERVER_PORT        $server_port;
+#服务器名，域名在server配置中指定的server_name
+fastcgi_param  SERVER_NAME        $server_name;
+
+# PHP only, required if PHP was built with --enable-force-cgi-redirect
+fastcgi_param  REDIRECT_STATUS    200;
+  \end{minted}
+\end{myquote}
 \end{document} 
