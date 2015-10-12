@@ -1,12 +1,14 @@
 % -*- coding: UTF8 -*-
 % firstDocument.tex
 % tex的第一个文档
-% 使用XelaTex编译
+% XelaTex 命令编译
 
 % ---引用包---
 
 % 中文article包，使用UTF8编码
 \documentclass[UTF8]{ctexart}
+% 支持多种语言输入
+% \usepackage[greek,english]{babel}
 % 插图功能宏包
 \usepackage{graphicx}
 \usepackage{float}
@@ -149,10 +151,34 @@ $a + b \times 90^\circ + 90\degree$
 
 \section{文本部分}
 % 重音命令
-\`o \'o \^o \"o
-\~o \=o \.o \u{o}
-\v{o} \H{o} \t{oo} \r{o}
-\c{o} \d{o} \b{o}
+\begin{table}[H]
+\begin{tabular}{cccc}
+\hline
+\`o & \'o & \^o & \"o \\
+\~o & \=o & \.o & \u{o} \\
+\v{o} & \H{o} & \t{oo} & \r{o} \\
+\c{o} & \d{o} & \b{o} & \\
+\hline
+\end{tabular}
+\end{table}
+
+% 特殊字符
+\begin{table}[H]
+\begin{tabular}{cccc}
+\hline
+\AA & \aa & \AE & \ae \\
+\OE & \oe & \SS & \ss \\
+\IJ & \ij & \L & \l \\
+\O & \o & \i & \j \\
+\hline
+\end{tabular}
+\end{table}
+
+% 输入希腊字母，由宏包babel提供
+% \textgreek{abcde}
+
+% 取消连字
+shelfful shelf{}ful shelf\/ful
 
 \begin{minted}{c}
 int main()

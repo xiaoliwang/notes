@@ -61,31 +61,31 @@
   \begin{minted}{php}
 # 使用的用户和组
 user www www;
-    
+
 # 指定工作衍生的进程数(一般等于cpu的总数或其倍数)
 worker_processes cpu_number;
-    
-# 指定错误日志存放路径，可选级别[ debug | info | notice 
+
+# 指定错误日志存放路径，可选级别[ debug | info | notice
 # | warn | error | crit]
 error_log error_path error_level;
-    
+
 # 指定pid存放路径
 pid pid_path;
-    
-# 指定文件描述符数量(cat /proc/sys/fs/file-max 或 
+
+# 指定文件描述符数量(cat /proc/sys/fs/file-max 或
 # ulimit -n查看文件描述符数量)
 worker_rlimit_nofile number;
-    
+
 events
 {
-  # 使用的网络I/O模型，Linux使用epoll，FreeBSD使用Kqueu
+  # 使用的网络I/O模型，Linux 使用epoll，FreeBSD使用Kqueu
   use epoll;
-      
+
   # 每个进程允许的最多连接数
   # worker_connections不能超过worker_rlimit_nofile
   worker_connections number;
 }
-    
+
 http
 {
   # 文件扩展名与文件类型映射表
@@ -106,7 +106,7 @@ http
   # 获取http最大数及大小，超过会返回414。default为8k
   large_client_header_buffers 4 32k;
 
-  # request body的最大值，超过会返回413。默认值为1m。
+  # request body的最大值，超过会返回413。 默认值为1m。
   # 设置0则为无限大。
   client_max_body_size 1m;
 
@@ -134,7 +134,7 @@ http
   # nginx向fastcgi进程发送request的连续写时间,默认60s
   fastcgi_send_timeout 300s;
 
-  # nginx读取fastcgi进程返回的response的连续读时间，默认60s
+  # nginx读取fastcgi进程返回的response 的连续读时间，默认60s
   fastcgi_read_timeout 300s;
 
   fastcgi_buffer_size 64k;
@@ -152,7 +152,7 @@ http
   #压缩缓冲区
   gzip_buffers 4 16k;
 
-  #压缩版本（默认1.1，前端如果是squid2.5请使用1.0）
+  #压缩版本（默认1.1，前端如果是squid2.5 请使用1.0）
   gzip_http_version 1.0;
 
   #压缩等级
@@ -212,10 +212,21 @@ http
 
 
 \subsection{Nginx配置文件的操作}
-设置变量：set \$key value;
-rewrite \^{}/(.*)\$ http://news.missevan.cn/\$1 permanent;
+设置变量使用以下命令：set \$key value。内置变量有：
+\begin{myquote}
+\$arg\_\emph{name}: argument \emph{name} in the request line \\
+\$args: arguments in the request line \\
+\$query\_string: same as \$args \\
+\$cookie\_\emph{name}: cookie \emph{name} \\
+\$connection: connection serial number \\
+\$connection\_requests: current number of requests made through a connection\footnote{chrome会发送两次request，有一次为favicon.ico} \\
+\$document\_root: root or alias directive's value for the current request \\
+\$document\_uri: same as \$uri \\
+\$request\_filename: file path for the current request, based on the root or alias
 
-一共有四种不同的flag，分别是redirect，permanent，break，last。前两种是跳转，后两种是代理。
+\end{myquote}
+
+url重写方法：rewrite \^{}/(.*)\$ http://news.missevan.cn/\$1 flag，一共有四种不同的flag，分别是redirect，permanent，break，last。前两种是跳转，后两种是代理。
 \begin{itemize}
   \item redirect：302\footnote{临时跳转}跳转
   \item permanent：301\footnote{永久跳转}跳转
@@ -231,21 +242,120 @@ rewrite \^{}/(.*)\$ http://news.missevan.cn/\$1 permanent;
   \item -x：用来判断文件是否可以执行
   \item $\sim$：区分大小写匹配
   \item $\sim$*：不区分大小写匹配
-  \item alias：在该目录下查找
-  \item root：认为该目录为root，进行查找
 \end{itemize}
 
+alias直接映射:
+\begin{myquote}
+  Syntax: alias path; \\
+  Context: location;
+\end{myquote}
+
+root将root映射:
+\begin{myquote}
+  Syntax: root path; \\
+  Default: root html;
+  Context: http, server, location, if in location
+\end{myquote}
+
+autoindex是否生成目录:
+\begin{myquote}
+  Syntax: autoindex on | off; \\
+  Default: autoindex off; \\
+  Context: http, server, location
+\end{myquote}
+
+try\_files尝试文件是否存在，否则执行后面:
+\begin{myquote}
+  Syntax: try\_files file... uri; \\
+  Context: server, location
+\end{myquote}
+
+\clearpage
 
 
 \section{Apache}
+\subsection{Apache的一些基本操作}
+以下为windows下的操作:
+\begin{shellcommand}[直接启动]
+  httped.exe
+\end{shellcommand}
+
+\begin{shellcommand}[直接关闭]
+  Control-C
+\end{shellcommand}
+
+\begin{shellcommand}[安装服务]
+  httped.exe -k install -n "MyServiceName" -f httpd.conf\footnote{-f为指定配置文件}
+\end{shellcommand}
+
+\begin{shellcommand}[删除服务]
+  httped.exe -k uninstall -n "MyServiceName"
+\end{shellcommand}
+
+\begin{shellcommand}[使用服务启动]
+  httped.exe -k start -n "MyServiceName"
+\end{shellcommand}
+
+\begin{shellcommand}[使用服务停止1]
+  httped.exe -k stop -n "MyServiceName"
+\end{shellcommand}
+
+\begin{shellcommand}[使用服务停止2]
+  httped.exe -k shutdown -n "MyServiceName"
+\end{shellcommand}
+
+\begin{shellcommand}[使用服务重启]
+  httped.exe -k restart -n "MyServiceName"
+\end{shellcommand}
+
+\subsection{Apache配置文件的操作}
+url重写需要使用模块modules/mod\_rewrite.so\footnote{使用语句为LoadModule rewrite\_module modules/mod\_rewrite.so}。在需要使用url重写的地方使用AllowOverride  All，这样Apache可以读取目录下的.htaccess文件。使用Require all granted授予访问权限。
+.htaccess的一个例子：
+\begin{myquote}
+  \begin{minted}{php}
+# 判断重写模块是否存在
+<IfModule rewrite_module>
+    # FollowSymLinks必须启动，这是rewrite引擎的安全需求。
+    Options +FollowSymLinks
+    # hide files from apache directory listings
+    IndexIgnore */*
+    # 启动重写引擎
+    RewriteEngine On
+
+    # RewriteCond为重写条件，-f表示常规文件，-d表示常规目录
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    # 使用重写的地址
+    RewriteBase /myapp/
+    # RewriteRule Pattern Substitution 
+    RewriteRule . /index.php
+</IfModule>
+  \end{minted}
+\end{myquote}
+
+虚拟主机模块为核心模块组建，下面是一个简单的例子：
+\begin{myquote}
+  \begin{minted}{php}
+# *表示对应多个ip
+<VirtualHost ip:80>
+  # ServerAdmin email-address 如果有什么错误，则发送邮件到该邮箱
+  ServerAdmin webmaster@host.example.com
+  DocumentRoot "/www/docs/host.example.com"
+  ServerName host.example.com
+  ErrorLog "logs/host.example.com-error_log"
+  TransferLog "logs/host.example.com-access_log"
+</VirtualHost>
+  \end{minted}
+\end{myquote}
 \clearpage
+
 
 \section{附录}
 \subsection{fastcgi\_params}
 \begin{myquote}
   \begin{minted}{php}
 #脚本请求路径
-fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name; 
+fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;
 #REQUEST的query参数
 fastcgi_param  QUERY_STRING       $query_string;
 #REQUEST的动作（GET, POST）
@@ -253,7 +363,7 @@ fastcgi_param  REQUEST_METHOD     $request_method;
 #REQUEST头中的Content-Type字段
 fastcgi_param  CONTENT_TYPE       $content_type;
 #REQUEST头中的Content-length字段
-fastcgi_param  CONTENT_LENGTH     $content_length; 
+fastcgi_param  CONTENT_LENGTH     $content_length;
 
 #脚本名称
 fastcgi_param  SCRIPT_NAME        $fastcgi_script_name;
@@ -266,7 +376,7 @@ fastcgi_param  DOCUMENT_ROOT      $document_root;
 #请求使用的协议
 fastcgi_param  SERVER_PROTOCOL    $server_protocol;
 #HTTP或HTTPS，通常是HTTP/1.0或HTTP/1.1。
-fastcgi_param  REQUEST_SCHEME     $scheme; 
+fastcgi_param  REQUEST_SCHEME     $scheme;
 fastcgi_param  HTTPS              $https if_not_empty;
 
 #CGI版本号
