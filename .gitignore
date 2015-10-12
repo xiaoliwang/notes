@@ -7,3 +7,5 @@
 *.synctex
 *.pygtex
 *.pygstyle
+*.DS_Store
+*.synctex.gz
